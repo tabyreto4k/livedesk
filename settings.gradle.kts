@@ -8,6 +8,7 @@ rootProject.name = "livedesk"
 includeBuild("build-logic")
 
 include(
+  "presence-contract",
   "chat-service",
   "presence-service",
 )

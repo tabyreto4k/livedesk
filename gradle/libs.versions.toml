@@ -5,11 +5,27 @@ spotless = "7.0.2"
 checkstyle = "10.21.4"
 palantirJavaFormat = "2.57.0"
 jacoco = "0.8.12"
+# Ветка Spring gRPC под Spring Framework 6.2 / Boot 3.5; 1.x уже требует Boot 4 — см. state.
+springGrpc = "0.12.0"
+grpc = "1.76.0"
+protobuf = "4.32.1"
+protobufPlugin = "0.9.6"
+tomcatAnnotations = "6.0.53"
 
 [libraries]
 plugin-spring-boot = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "springBoot" }
 plugin-spring-dependency-management = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "springDependencyManagement" }
 plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 
+protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
+protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
+grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
+grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
+grpc-codegen = { module = "io.grpc:protoc-gen-grpc-java", version.ref = "grpc" }
+# Стабы размечены javax.annotation.Generated, которого нет в JDK с девятки.
+tomcat-annotations = { module = "org.apache.tomcat:annotations-api", version.ref = "tomcatAnnotations" }
+spring-grpc-bom = { module = "org.springframework.grpc:spring-grpc-dependencies", version.ref = "springGrpc" }
+
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
