@@ -20,6 +20,11 @@ repositories { mavenCentral() }
 
 val integrationTest: SourceSet by sourceSets.creating
 
+// Своим source set'ом Gradle раздаёт только объявленные зависимости: классы main в него
+// не попадают, и интеграционный тест не увидел бы даже приложение, которое поднимает.
+integrationTest.compileClasspath += sourceSets["main"].output
+integrationTest.runtimeClasspath += sourceSets["main"].output
+
 configurations[integrationTest.implementationConfigurationName]
   .extendsFrom(configurations.getByName("testImplementation"))
 configurations[integrationTest.runtimeOnlyConfigurationName]
@@ -32,7 +37,7 @@ val integrationTestTask =
     description = "Интеграционные тесты (Testcontainers)."
     group = "verification"
     testClassesDirs = integrationTest.output.classesDirs
-    classpath = configurations[integrationTest.runtimeClasspathConfigurationName] + integrationTest.output
+    classpath = integrationTest.runtimeClasspath
     shouldRunAfter(tasks.named("test"))
   }
 
