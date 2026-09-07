@@ -1,0 +1,79 @@
+### LiveDesk — REST-сценарий Захода 2
+### Порядок важен: регистрация → вход → обращение → очередь → take → история.
+### Сообщения отправляются не отсюда, а по STOMP (`/app/conversations/{id}/send`).
+
+@host = http://localhost:8080
+@clientEmail = client@livedesk.local
+@clientPassword = client-local
+@operatorEmail = operator@livedesk.local
+@operatorPassword = operator-local
+
+### Регистрация клиента. Роль CLIENT выдаётся всем, кто пришёл сам.
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{clientEmail}}",
+  "password": "{{clientPassword}}"
+}
+
+### Вход клиента
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{clientEmail}}",
+  "password": "{{clientPassword}}"
+}
+
+> {% client.global.set("clientToken", response.body.accessToken); %}
+
+### Вход оператора. Оператора завела миграция V1, паролем из OPERATOR_PASSWORD_HASH.
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{operatorEmail}}",
+  "password": "{{operatorPassword}}"
+}
+
+> {% client.global.set("operatorToken", response.body.accessToken); %}
+
+### Клиент создаёт обращение — оно встаёт в очередь со статусом WAITING
+POST {{host}}/api/v1/conversations
+Content-Type: application/json
+Authorization: Bearer {{clientToken}}
+
+{
+  "topic": "не приходит счёт"
+}
+
+> {% client.global.set("conversationId", response.body.id); %}
+
+### Очередь оператора
+GET {{host}}/api/v1/conversations?status=WAITING
+Authorization: Bearer {{operatorToken}}
+
+### Оператор забирает обращение — WAITING переходит в ACTIVE
+POST {{host}}/api/v1/conversations/{{conversationId}}/take
+Authorization: Bearer {{operatorToken}}
+
+### Повторный take: строку уже забрали, UPDATE не задел ни одной — 409
+POST {{host}}/api/v1/conversations/{{conversationId}}/take
+Authorization: Bearer {{operatorToken}}
+
+### Свои обращения оператора
+GET {{host}}/api/v1/conversations?mine=true
+Authorization: Bearer {{operatorToken}}
+
+### История: последние 50 сообщений. Пусто, пока никто не написал по STOMP.
+GET {{host}}/api/v1/conversations/{{conversationId}}/messages?limit=50
+Authorization: Bearer {{clientToken}}
+
+### Следующая страница — keyset по id последнего показанного сообщения
+GET {{host}}/api/v1/conversations/{{conversationId}}/messages?before=1&limit=50
+Authorization: Bearer {{clientToken}}
+
+### Клиент закрывает обращение
+POST {{host}}/api/v1/conversations/{{conversationId}}/close
+Authorization: Bearer {{clientToken}}
