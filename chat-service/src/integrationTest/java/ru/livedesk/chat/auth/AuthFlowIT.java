@@ -107,6 +107,6 @@ class AuthFlowIT extends IntegrationTestSupport {
                 .header(HttpHeaders.AUTHORIZATION, bearer(token))
                 .exchange()
                 .expectStatus()
-                .value(status -> assertThat(status).isNotEqualTo(HttpStatus.UNAUTHORIZED.value()));
+                .isOk();
     }
 }
