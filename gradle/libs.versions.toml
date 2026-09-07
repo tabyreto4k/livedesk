@@ -1,14 +1,15 @@
 [versions]
-springBoot = "3.5.16"
+springBoot = "4.1.1"
 springDependencyManagement = "1.1.7"
 spotless = "7.0.2"
 checkstyle = "10.21.4"
 palantirJavaFormat = "2.57.0"
 jacoco = "0.8.12"
-# Ветка Spring gRPC под Spring Framework 6.2 / Boot 3.5; 1.x уже требует Boot 4 — см. state.
-springGrpc = "0.12.0"
-grpc = "1.76.0"
-protobuf = "4.32.1"
+# Зеркалят BOM Spring Boot: presence-contract не берёт его dependency-management,
+# поэтому версии стабов держим тут руками и синхронно с сервисами.
+springGrpc = "1.1.1"
+grpc = "1.83.1"
+protobuf = "4.35.1"
 protobufPlugin = "0.9.6"
 tomcatAnnotations = "6.0.53"
 
