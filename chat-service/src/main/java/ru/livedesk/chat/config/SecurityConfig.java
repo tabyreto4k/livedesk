@@ -67,6 +67,9 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/info")
                         .permitAll()
+                        // Рукопожатие пускаем без токена: WebSocket авторизуется на CONNECT-фрейме [Р4].
+                        .requestMatchers("/ws/**")
+                        .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/conversations")
                         .hasRole(UserRole.CLIENT.name())
                         .requestMatchers(HttpMethod.POST, "/api/v1/conversations/*/take")

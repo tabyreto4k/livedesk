@@ -3,6 +3,7 @@ package ru.livedesk.chat.message.service;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Limit;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.livedesk.chat.auth.model.AuthenticatedUser;
@@ -20,21 +21,31 @@ public class MessageService {
     public static final int DEFAULT_PAGE_SIZE = 50;
     private static final int MAX_PAGE_SIZE = 100;
 
+    private static final String CONVERSATION_TOPIC = "/topic/conversations/";
+
     private final MessageRepository messages;
     private final ConversationService conversations;
+    private final SimpMessagingTemplate broker;
 
-    public MessageService(MessageRepository messages, ConversationService conversations) {
+    public MessageService(MessageRepository messages, ConversationService conversations, SimpMessagingTemplate broker) {
         this.messages = messages;
         this.conversations = conversations;
+        this.broker = broker;
     }
 
-    @Transactional
+    /**
+     * Без общей транзакции намеренно: подписчики получают сообщение уже после того, как
+     * `save` зафиксировал строку, — иначе клиент увидел бы то, чего в истории ещё нет.
+     * В Заходе 3 прямая рассылка сменится публикацией в Redis, порядок останется тот же.
+     */
     public MessageResponse send(UUID conversationId, AuthenticatedUser sender, String text) {
         Conversation conversation = conversations.requireParticipant(conversationId, sender);
         if (conversation.getStatus() == ConversationStatus.CLOSED) {
             throw new IllegalStateTransitionException("Обращение закрыто, писать в него нельзя");
         }
-        return MessageResponse.of(messages.save(new Message(conversationId, sender.id(), text)));
+        MessageResponse response = MessageResponse.of(messages.save(new Message(conversationId, sender.id(), text)));
+        broker.convertAndSend(CONVERSATION_TOPIC + conversationId, response);
+        return response;
     }
 
     /**
