@@ -14,5 +14,5 @@ dependencies {
 
   "integrationTestImplementation"("org.springframework.boot:spring-boot-starter-test")
   "integrationTestImplementation"("org.springframework.boot:spring-boot-testcontainers")
-  "integrationTestImplementation"("org.testcontainers:junit-jupiter")
+  "integrationTestImplementation"("org.testcontainers:testcontainers-junit-jupiter")
 }

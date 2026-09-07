@@ -1,4 +1,7 @@
-FROM eclipse-temurin:21-jdk-alpine AS build
+# Сборка идёт на glibc, а не на alpine: protoc-gen-grpc-java слинкован динамически
+# и под musl падает с «program not found». Стадия всё равно отбрасывается,
+# её вес ни на что не влияет, а runtime ниже остаётся alpine.
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
 
 COPY gradlew ./
