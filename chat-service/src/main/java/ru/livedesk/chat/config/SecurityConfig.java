@@ -59,6 +59,13 @@ public class SecurityConfig {
         return converter;
     }
 
+    /**
+     * CSRF выключен осознанно, и CodeQL на это ругается (java/spring-disabled-csrf-protection).
+     * Атака работает там, где браузер сам прикладывает учётные данные — куку или сессию. Здесь
+     * их нет: сессии STATELESS, ни формы входа, ни Basic, единственный носитель — заголовок
+     * `Authorization`, который кросс-сайтовый запрос приложить не может. Включённая защита
+     * потребовала бы от клиента ещё и CSRF-токен, ничего при этом не закрыв.
+     */
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationConverter converter) throws Exception {
         return http.csrf(csrf -> csrf.disable())
