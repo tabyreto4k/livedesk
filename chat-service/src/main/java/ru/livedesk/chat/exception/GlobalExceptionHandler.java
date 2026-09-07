@@ -27,6 +27,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem(HttpStatus.CONFLICT, "Адрес занят", exception.getMessage());
     }
 
+    @ExceptionHandler(IllegalStateTransitionException.class)
+    ProblemDetail handleIllegalStateTransition(IllegalStateTransitionException exception) {
+        return problem(HttpStatus.CONFLICT, "Недопустимый переход", exception.getMessage());
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     ProblemDetail handleInvalidCredentials(InvalidCredentialsException exception) {
         return problem(HttpStatus.UNAUTHORIZED, "Вход не выполнен", exception.getMessage());

@@ -3,11 +3,13 @@ package ru.livedesk.chat;
 import java.util.Objects;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -16,6 +18,9 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import ru.livedesk.chat.auth.dto.LoginRequest;
 import ru.livedesk.chat.auth.dto.RegisterRequest;
 import ru.livedesk.chat.auth.dto.TokenResponse;
+import ru.livedesk.chat.auth.model.User;
+import ru.livedesk.chat.auth.model.UserRole;
+import ru.livedesk.chat.auth.repository.UserRepository;
 
 /**
  * Общая обвязка интеграционных тестов: один контейнер Postgres на весь прогон и HTTP-клиент,
@@ -37,6 +42,12 @@ public abstract class IntegrationTestSupport {
     static {
         POSTGRES.start();
     }
+
+    @Autowired
+    private UserRepository users;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @LocalServerPort
     protected int port;
@@ -72,6 +83,13 @@ public abstract class IntegrationTestSupport {
                 .exchange()
                 .expectStatus()
                 .isCreated();
+        return login(email, CLIENT_PASSWORD);
+    }
+
+    /** Второго оператора через API не завести: роль OPERATOR выдаётся только миграцией. */
+    protected String registerOperator() {
+        String email = "operator-" + UUID.randomUUID() + "@livedesk.local";
+        users.save(new User(email, passwordEncoder.encode(CLIENT_PASSWORD), UserRole.OPERATOR));
         return login(email, CLIENT_PASSWORD);
     }
 
