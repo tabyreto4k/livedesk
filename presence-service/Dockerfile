@@ -11,6 +11,7 @@ RUN ./gradlew --version --no-daemon
 COPY settings.gradle.kts build.gradle.kts ./
 COPY build-logic build-logic
 COPY config config
+COPY presence-contract presence-contract
 COPY presence-service presence-service
 RUN ./gradlew :presence-service:bootJar --no-daemon -x test \
     && java -Djarmode=tools -jar presence-service/build/libs/*.jar extract --layers --launcher --destination extracted

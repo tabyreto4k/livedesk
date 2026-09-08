@@ -1,7 +1,5 @@
 name: livedesk
 
-# presence-service приезжает Заходом 4.
-
 x-chat-environment: &chat-environment
   POSTGRES_HOST: postgres
   POSTGRES_PORT: 5432
@@ -10,6 +8,8 @@ x-chat-environment: &chat-environment
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD не задан}
   REDIS_HOST: redis
   REDIS_PORT: 6379
+  PRESENCE_GRPC_HOST: presence-service
+  PRESENCE_GRPC_PORT: 9090
   JWT_SECRET: ${JWT_SECRET:?JWT_SECRET не задан}
   OPERATOR_EMAIL: ${OPERATOR_EMAIL:-operator@livedesk.local}
   OPERATOR_PASSWORD_HASH: ${OPERATOR_PASSWORD_HASH:?OPERATOR_PASSWORD_HASH не задан}
@@ -59,6 +59,23 @@ services:
       timeout: 3s
       retries: 10
       start_period: 5s
+    restart: unless-stopped
+
+  # В зависимости инстансов чата presence-service намеренно нет: статусы — не критичный
+  # тракт, чат обязан подниматься и работать без него.
+  presence-service:
+    build:
+      context: .
+      dockerfile: presence-service/Dockerfile
+    image: livedesk/presence-service:0.1.0
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GRPC_PORT: 9090
+      PRESENCE_TTL: ${PRESENCE_TTL:-30s}
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   # Оба инстанса — один образ; отличается только INSTANCE_ID, и он виден в каждой строке

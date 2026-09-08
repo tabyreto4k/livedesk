@@ -7,6 +7,13 @@ spring:
     password: it
   jpa:
     show-sql: false
+  grpc:
+    client:
+      channel:
+        presence:
+          # presence-service в интеграционных тестах не поднимается: порт заведомо пустой,
+          # проверяется деградация до offline.
+          target: localhost:1
 
 livedesk:
   jwt:
