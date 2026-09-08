@@ -46,6 +46,9 @@ management:
 logging:
   level:
     root: INFO
+  # Инстанс в каждой строке: с двумя за nginx иначе не видно, кто обслужил сессию.
+  pattern:
+    level: "%5p [${INSTANCE_ID:local}]"
 
 livedesk:
   jwt:
