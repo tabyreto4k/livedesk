@@ -103,7 +103,7 @@ services:
       - "${HTTP_PORT:-8080}:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/html:/usr/share/nginx/html:ro
+      - ./frontend:/usr/share/nginx/html:ro
     healthcheck:
       # Адрес числом: busybox-wget сначала пробует ::1, а сервер слушает только IPv4.
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz || exit 1"]

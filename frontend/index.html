@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LiveDesk</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>LiveDesk</h1>
+  <p>Две панели одной страницы — клиент и оператор. Соединения независимы, поэтому nginx
+     разводит их по разным инстансам: смотри <code>docker compose logs nginx</code>.</p>
+</header>
+
+<main>
+  <section class="panel" data-role="CLIENT">
+    <h2>Клиент</h2>
+
+    <form class="login">
+      <input name="email" type="email" placeholder="почта" required autocomplete="username">
+      <input name="password" type="password" placeholder="пароль" required minlength="8" autocomplete="current-password">
+      <button type="submit">Войти</button>
+      <button type="button" class="register">Зарегистрироваться</button>
+    </form>
+
+    <div class="signed-in" hidden>
+      <p class="whoami"></p>
+      <form class="new-conversation">
+        <input name="topic" placeholder="с чем нужна помощь" required>
+        <button type="submit">Создать обращение</button>
+      </form>
+      <ul class="conversations"></ul>
+    </div>
+
+    <div class="chat" hidden>
+      <p class="chat-title"></p>
+      <p class="counterpart">Собеседник: <span class="presence">—</span></p>
+      <button type="button" class="load-more">Загрузить ещё</button>
+      <ol class="messages"></ol>
+      <form class="send">
+        <input name="text" placeholder="сообщение" required maxlength="4000" autocomplete="off">
+        <button type="submit">Отправить</button>
+      </form>
+    </div>
+
+    <p class="status"></p>
+  </section>
+
+  <section class="panel" data-role="OPERATOR">
+    <h2>Оператор</h2>
+
+    <form class="login">
+      <input name="email" type="email" placeholder="почта" required autocomplete="username">
+      <input name="password" type="password" placeholder="пароль" required autocomplete="current-password">
+      <button type="submit">Войти</button>
+    </form>
+
+    <div class="signed-in" hidden>
+      <p class="whoami"></p>
+      <p>Очередь обновляется событием <code>/topic/queue</code>.</p>
+      <ul class="conversations"></ul>
+    </div>
+
+    <div class="chat" hidden>
+      <p class="chat-title"></p>
+      <p class="counterpart">Собеседник: <span class="presence">—</span></p>
+      <button type="button" class="load-more">Загрузить ещё</button>
+      <ol class="messages"></ol>
+      <form class="send">
+        <input name="text" placeholder="сообщение" required maxlength="4000" autocomplete="off">
+        <button type="submit">Отправить</button>
+      </form>
+    </div>
+
+    <p class="status"></p>
+  </section>
+</main>
+
+<script src="vendor/sockjs.min.js"></script>
+<script src="vendor/stomp.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
