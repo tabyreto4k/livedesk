@@ -14,7 +14,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Limit;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import ru.livedesk.chat.auth.model.AuthenticatedUser;
 import ru.livedesk.chat.auth.model.UserRole;
 import ru.livedesk.chat.conversation.model.Conversation;
@@ -24,13 +23,14 @@ import ru.livedesk.chat.exception.NotFoundException;
 import ru.livedesk.chat.message.dto.MessageResponse;
 import ru.livedesk.chat.message.model.Message;
 import ru.livedesk.chat.message.repository.MessageRepository;
+import ru.livedesk.chat.ws.RedisMessageRelay;
 
 class MessageServiceTest {
 
     private final MessageRepository messages = mock(MessageRepository.class);
     private final ConversationService conversations = mock(ConversationService.class);
-    private final SimpMessagingTemplate broker = mock(SimpMessagingTemplate.class);
-    private final MessageService messageService = new MessageService(messages, conversations, broker);
+    private final RedisMessageRelay relay = mock(RedisMessageRelay.class);
+    private final MessageService messageService = new MessageService(messages, conversations, relay);
 
     private final AuthenticatedUser sender = new AuthenticatedUser(UUID.randomUUID(), UserRole.CLIENT);
     private final UUID conversationId = UUID.randomUUID();
@@ -45,18 +45,18 @@ class MessageServiceTest {
 
         assertThat(response.text()).isEqualTo("здравствуйте");
         assertThat(response.senderId()).isEqualTo(sender.id());
-        verify(broker).convertAndSend("/topic/conversations/" + conversationId, response);
+        verify(relay).publishMessage(conversationId, response);
     }
 
     @Test
-    void refusesToWriteIntoClosedConversationAndBroadcastsNothing() {
+    void refusesToWriteIntoClosedConversationAndPublishesNothing() {
         Conversation conversation = new Conversation(sender.id(), "тема");
         conversation.close();
         when(conversations.requireParticipant(conversationId, sender)).thenReturn(conversation);
 
         assertThatThrownBy(() -> messageService.send(conversationId, sender, "ещё вопрос"))
                 .isInstanceOf(IllegalStateTransitionException.class);
-        verifyNoInteractions(broker);
+        verifyNoInteractions(relay);
     }
 
     @Test
