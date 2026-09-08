@@ -1,0 +1,38 @@
+:root { color-scheme: light dark; --line: #8883; }
+
+body {
+  margin: 0 auto;
+  padding: 1rem;
+  max-width: 70rem;
+  font: 15px/1.45 system-ui, sans-serif;
+}
+
+header p { color: #8a8a8a; max-width: 60ch; }
+
+main { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); }
+
+.panel { border: 1px solid var(--line); border-radius: 8px; padding: 1rem; }
+.panel h2 { margin-top: 0; }
+
+/* Авторский `display` у form перебивает `display: none` от атрибута hidden. */
+[hidden] { display: none !important; }
+
+form { display: flex; flex-wrap: wrap; gap: .4rem; margin: .6rem 0; }
+input { flex: 1 1 8rem; padding: .4rem; border: 1px solid var(--line); border-radius: 5px; background: none; color: inherit; }
+button { padding: .4rem .8rem; border: 1px solid var(--line); border-radius: 5px; background: none; color: inherit; cursor: pointer; }
+button:hover { border-color: currentColor; }
+
+ul, ol { list-style: none; margin: .5rem 0; padding: 0; }
+
+.conversations li { display: flex; justify-content: space-between; gap: .5rem; align-items: center; padding: .35rem 0; border-bottom: 1px solid var(--line); }
+
+.messages { max-height: 15rem; overflow-y: auto; border: 1px solid var(--line); border-radius: 5px; padding: .5rem; }
+.messages li { padding: .2rem 0; }
+.messages .mine { text-align: right; }
+.messages time { color: #8a8a8a; font-size: .8em; margin-left: .4rem; }
+
+.status { min-height: 1.2em; color: #8a8a8a; font-size: .9em; }
+.status.error { color: #c0392b; }
+
+.presence.online { color: #2e7d32; }
+.presence.offline { color: #8a8a8a; }
