@@ -10,6 +10,10 @@ spring:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:livedesk_db}
     username: ${POSTGRES_USER:livedesk}
     password: ${POSTGRES_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   jpa:
     open-in-view: false
     hibernate:
@@ -42,6 +46,9 @@ management:
 logging:
   level:
     root: INFO
+  # Инстанс в каждой строке: с двумя за nginx иначе не видно, кто обслужил сессию.
+  pattern:
+    level: "%5p [${INSTANCE_ID:local}]"
 
 livedesk:
   jwt:

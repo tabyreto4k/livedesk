@@ -9,10 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import ru.livedesk.chat.IntegrationTestSupport;
 import ru.livedesk.chat.conversation.dto.ConversationResponse;
-import ru.livedesk.chat.conversation.dto.CreateConversationRequest;
 import ru.livedesk.chat.message.dto.MessageResponse;
 import ru.livedesk.chat.message.model.Message;
 import ru.livedesk.chat.message.repository.MessageRepository;
@@ -25,7 +23,7 @@ class MessageKeysetIT extends IntegrationTestSupport {
     @Test
     void historyIsPagedByCursorWithoutGapsOrDuplicates() {
         String token = registerClient(randomEmail());
-        ConversationResponse conversation = createConversation(token);
+        ConversationResponse conversation = createConversation(token, "история");
         fill(conversation.id(), conversation.clientId(), 120);
 
         List<MessageResponse> first = history(token, conversation.id(), null, 50);
@@ -45,7 +43,7 @@ class MessageKeysetIT extends IntegrationTestSupport {
     @Test
     void messagesArrivingBetweenPagesDoNotShiftTheCursor() {
         String token = registerClient(randomEmail());
-        ConversationResponse conversation = createConversation(token);
+        ConversationResponse conversation = createConversation(token, "история");
         fill(conversation.id(), conversation.clientId(), 60);
 
         List<MessageResponse> first = history(token, conversation.id(), null, 50);
@@ -58,7 +56,7 @@ class MessageKeysetIT extends IntegrationTestSupport {
 
     @Test
     void strangerCannotReadHistory() {
-        ConversationResponse conversation = createConversation(registerClient(randomEmail()));
+        ConversationResponse conversation = createConversation(registerClient(randomEmail()), "история");
         String strangerToken = registerClient(randomEmail());
 
         client.get()
@@ -98,20 +96,6 @@ class MessageKeysetIT extends IntegrationTestSupport {
                 .expectStatus()
                 .isOk()
                 .expectBody(new ParameterizedTypeReference<List<MessageResponse>>() {})
-                .returnResult()
-                .getResponseBody());
-    }
-
-    private ConversationResponse createConversation(String token) {
-        return Objects.requireNonNull(client.post()
-                .uri("/api/v1/conversations")
-                .header(HttpHeaders.AUTHORIZATION, bearer(token))
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new CreateConversationRequest("история"))
-                .exchange()
-                .expectStatus()
-                .isCreated()
-                .expectBody(ConversationResponse.class)
                 .returnResult()
                 .getResponseBody());
     }

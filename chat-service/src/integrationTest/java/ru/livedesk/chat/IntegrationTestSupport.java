@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import ru.livedesk.chat.auth.dto.LoginRequest;
 import ru.livedesk.chat.auth.dto.RegisterRequest;
@@ -21,10 +23,12 @@ import ru.livedesk.chat.auth.dto.TokenResponse;
 import ru.livedesk.chat.auth.model.User;
 import ru.livedesk.chat.auth.model.UserRole;
 import ru.livedesk.chat.auth.repository.UserRepository;
+import ru.livedesk.chat.conversation.dto.ConversationResponse;
+import ru.livedesk.chat.conversation.dto.CreateConversationRequest;
 
 /**
- * Общая обвязка интеграционных тестов: один контейнер Postgres на весь прогон и HTTP-клиент,
- * бьющий в реальный порт приложения.
+ * Общая обвязка интеграционных тестов: по одному контейнеру Postgres и Redis на весь прогон
+ * и HTTP-клиент, бьющий в реальный порт приложения.
  */
 @ActiveProfiles("it")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -34,13 +38,21 @@ public abstract class IntegrationTestSupport {
     protected static final String OPERATOR_PASSWORD = "operator-secret";
     protected static final String CLIENT_PASSWORD = "client-secret";
 
-    private static final String OPERATOR_PASSWORD_HASH = new BCryptPasswordEncoder().encode(OPERATOR_PASSWORD);
+    protected static final String OPERATOR_PASSWORD_HASH = new BCryptPasswordEncoder().encode(OPERATOR_PASSWORD);
+
+    private static final int REDIS_PORT = 6379;
 
     @ServiceConnection
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:16-alpine");
+    protected static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:16-alpine");
+
+    /** Без шины контекст не поднимется: на ней держится доставка сообщений подписчикам [Р3]. */
+    @ServiceConnection(name = "redis")
+    protected static final GenericContainer<?> REDIS =
+            new GenericContainer<>("redis:7-alpine").withExposedPorts(REDIS_PORT);
 
     static {
         POSTGRES.start();
+        REDIS.start();
     }
 
     @Autowired
@@ -95,6 +107,31 @@ public abstract class IntegrationTestSupport {
 
     protected String loginOperator() {
         return login(OPERATOR_EMAIL, OPERATOR_PASSWORD);
+    }
+
+    protected ConversationResponse createConversation(String clientToken, String topic) {
+        return Objects.requireNonNull(client.post()
+                .uri("/api/v1/conversations")
+                .header(HttpHeaders.AUTHORIZATION, bearer(clientToken))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new CreateConversationRequest(topic))
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody(ConversationResponse.class)
+                .returnResult()
+                .getResponseBody());
+    }
+
+    protected ConversationResponse takenConversation(String clientToken, String operatorToken, String topic) {
+        ConversationResponse created = createConversation(clientToken, topic);
+        client.post()
+                .uri("/api/v1/conversations/{id}/take", created.id())
+                .header(HttpHeaders.AUTHORIZATION, bearer(operatorToken))
+                .exchange()
+                .expectStatus()
+                .isOk();
+        return created;
     }
 
     protected String login(String email, String password) {

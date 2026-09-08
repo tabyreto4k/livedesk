@@ -12,20 +12,28 @@ import ru.livedesk.chat.conversation.model.ConversationStatus;
 import ru.livedesk.chat.conversation.repository.ConversationRepository;
 import ru.livedesk.chat.exception.IllegalStateTransitionException;
 import ru.livedesk.chat.exception.NotFoundException;
+import ru.livedesk.chat.ws.RedisMessageRelay;
 
 @Service
 public class ConversationService {
 
     private final ConversationRepository conversations;
+    private final RedisMessageRelay relay;
 
-    public ConversationService(ConversationRepository conversations) {
+    public ConversationService(ConversationRepository conversations, RedisMessageRelay relay) {
         this.conversations = conversations;
+        this.relay = relay;
     }
 
-    @Transactional
+    /**
+     * Без общей транзакции намеренно: событие уходит операторам после того, как `save`
+     * зафиксировал строку, — иначе оператор увидел бы в очереди то, чего ещё нет в базе.
+     */
     public ConversationResponse create(AuthenticatedUser client, CreateConversationRequest request) {
         Conversation conversation = new Conversation(client.id(), request.topic());
-        return ConversationResponse.of(conversations.save(conversation));
+        ConversationResponse response = ConversationResponse.of(conversations.save(conversation));
+        relay.publishQueueEvent(response);
+        return response;
     }
 
     /** Оператор без `mine` видит очередь, с `mine` — свои обращения; клиент — только свои. */

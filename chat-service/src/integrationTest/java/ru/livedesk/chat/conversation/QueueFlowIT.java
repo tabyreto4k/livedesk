@@ -13,11 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import ru.livedesk.chat.IntegrationTestSupport;
 import ru.livedesk.chat.conversation.dto.ConversationResponse;
-import ru.livedesk.chat.conversation.dto.CreateConversationRequest;
 import ru.livedesk.chat.conversation.model.ConversationStatus;
 
 class QueueFlowIT extends IntegrationTestSupport {
@@ -113,21 +111,6 @@ class QueueFlowIT extends IntegrationTestSupport {
                 .uri("/api/v1/conversations/{id}/close", conversation.id())
                 .header(HttpHeaders.AUTHORIZATION, bearer(token))
                 .exchange();
-    }
-
-    private ConversationResponse createConversation(String clientToken, String topic) {
-        ConversationResponse created = client.post()
-                .uri("/api/v1/conversations")
-                .header(HttpHeaders.AUTHORIZATION, bearer(clientToken))
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new CreateConversationRequest(topic))
-                .exchange()
-                .expectStatus()
-                .isCreated()
-                .expectBody(ConversationResponse.class)
-                .returnResult()
-                .getResponseBody();
-        return Objects.requireNonNull(created);
     }
 
     private Callable<Integer> take(ConversationResponse conversation, String token, CyclicBarrier barrier) {

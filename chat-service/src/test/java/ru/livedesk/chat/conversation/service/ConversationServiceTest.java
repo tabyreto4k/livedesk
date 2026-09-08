@@ -20,11 +20,13 @@ import ru.livedesk.chat.conversation.model.ConversationStatus;
 import ru.livedesk.chat.conversation.repository.ConversationRepository;
 import ru.livedesk.chat.exception.IllegalStateTransitionException;
 import ru.livedesk.chat.exception.NotFoundException;
+import ru.livedesk.chat.ws.RedisMessageRelay;
 
 class ConversationServiceTest {
 
     private final ConversationRepository conversations = mock(ConversationRepository.class);
-    private final ConversationService conversationService = new ConversationService(conversations);
+    private final RedisMessageRelay relay = mock(RedisMessageRelay.class);
+    private final ConversationService conversationService = new ConversationService(conversations, relay);
 
     private final AuthenticatedUser client = new AuthenticatedUser(UUID.randomUUID(), UserRole.CLIENT);
     private final AuthenticatedUser operator = new AuthenticatedUser(UUID.randomUUID(), UserRole.OPERATOR);
@@ -37,6 +39,16 @@ class ConversationServiceTest {
 
         assertThat(response.clientId()).isEqualTo(client.id());
         assertThat(response.status()).isEqualTo(ConversationStatus.WAITING);
+    }
+
+    /** Очередь операторов живёт на всех инстансах, поэтому событие уходит в Redis, а не в брокер. */
+    @Test
+    void newConversationIsAnnouncedToTheQueue() {
+        when(conversations.save(any(Conversation.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConversationResponse response = conversationService.create(client, new CreateConversationRequest("тема"));
+
+        verify(relay).publishQueueEvent(response);
     }
 
     @Test
