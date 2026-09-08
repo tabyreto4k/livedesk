@@ -1,0 +1,18 @@
+# Профиль `it`: дополняет основной application.yml, а не подменяет его. Соединение с БД
+# приезжает из @ServiceConnection, здесь только то, что иначе требует окружения.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/replaced-by-service-connection
+    username: it
+    password: it
+  jpa:
+    show-sql: false
+
+livedesk:
+  jwt:
+    secret: integration-test-signing-key-32-bytes-min
+    ttl: 15m
+
+logging:
+  level:
+    root: WARN

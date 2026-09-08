@@ -6,6 +6,20 @@ spring:
       enabled: true
   lifecycle:
     timeout-per-shutdown-phase: 20s
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:livedesk_db}
+    username: ${POSTGRES_USER:livedesk}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    placeholders:
+      operator_email: ${OPERATOR_EMAIL:operator@livedesk.local}
+      operator_password_hash: ${OPERATOR_PASSWORD_HASH}
 
 server:
   port: ${SERVER_PORT:8080}
@@ -28,3 +42,8 @@ management:
 logging:
   level:
     root: INFO
+
+livedesk:
+  jwt:
+    secret: ${JWT_SECRET}
+    ttl: 12h
