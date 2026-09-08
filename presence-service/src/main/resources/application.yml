@@ -1,6 +1,13 @@
 spring:
   application:
     name: presence-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  grpc:
+    server:
+      port: ${GRPC_PORT:9090}
   threads:
     virtual:
       enabled: true
@@ -28,3 +35,8 @@ management:
 logging:
   level:
     root: INFO
+
+livedesk:
+  presence:
+    # Клиент шлёт heartbeat каждые 10 секунд, TTL — три периода [Р8].
+    ttl: ${PRESENCE_TTL:30s}
